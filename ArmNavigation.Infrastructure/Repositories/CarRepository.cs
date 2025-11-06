@@ -8,22 +8,28 @@ namespace ArmNavigation.Infrastructure.Repositories
 {
     public sealed class CarRepository : BaseRepository, ICarRepository
     {
-
         public async Task<IEnumerable<Car>> GetAllByOrgAsync(Guid? medInstitutionId, CancellationToken ct)
         {
-            var where = medInstitutionId.HasValue ? "AND c.\"MedInstitutionId\" = @orgId" : string.Empty;
-            var sql = $"""
+            var sqlBuilder = new SqlBuilder();
+            var template = sqlBuilder.AddTemplate("""
                 SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
                 FROM "Cars" c
-                WHERE c."IsRemoved" = false {where}
-                """;
+                /**where**/
+                """);
 
-        var parameters = new DynamicParameters();
-        if (medInstitutionId.HasValue)
-            parameters.Add("orgId", medInstitutionId.Value);
+            sqlBuilder.Where("c.\"IsRemoved\" = false");
 
-        var result = await QueryAsync<Car>(sql, parameters, ct);
-        return result;
+            if (medInstitutionId.HasValue)
+            {
+                sqlBuilder.Where("c.\"MedInstitutionId\" = @orgId");
+            }
+
+            var parameters = new DynamicParameters();
+            if (medInstitutionId.HasValue)
+                parameters.Add("orgId", medInstitutionId.Value);
+
+            var result = await QueryAsync<Car>(template.RawSql, parameters, ct);
+            return result;
         }
 
         public async Task<Car?> GetByIdAsync(Guid id, CancellationToken ct)
@@ -34,10 +40,10 @@ namespace ArmNavigation.Infrastructure.Repositories
                 WHERE c."CarId" = @id AND c."IsRemoved" = false
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", id);
+            var parameters = new DynamicParameters();
+            parameters.Add("id", id);
 
-        return await QuerySingleOrDefaultAsync<Car>(sql, parameters, ct);
+            return await QuerySingleOrDefaultAsync<Car>(sql, parameters, ct);
         }
 
         public async Task<Guid> CreateAsync(Car car, CancellationToken ct)
@@ -45,16 +51,16 @@ namespace ArmNavigation.Infrastructure.Repositories
             var id = car.CarId != Guid.Empty ? car.CarId : Guid.NewGuid();
             const string sql = """
                 INSERT INTO "Cars" ("CarId", "RegNum", "Gps-tracker", "IsRemoved", "MedInstitutionId")
-                VALUES (@id, @reg, @gps, false, @orgId)
+                VALUES (@id, @regNum, @gpsTracker, false, @medInstitutionId)
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", id);
-        parameters.Add("reg", car.RegNum);
-        parameters.Add("gps", car.GpsTracker);
-        parameters.Add("orgId", car.MedInstitutionId);
+            var parameters = new DynamicParameters();
+            parameters.Add("id", id);
+            parameters.Add("regNum", car.RegNum);
+            parameters.Add("gpsTracker", car.GpsTracker);
+            parameters.Add("medInstitutionId", car.MedInstitutionId);
 
-        await ExecuteAsync(sql, parameters, ct);
+            await ExecuteAsync(sql, parameters, ct);
             return id;
         }
 
@@ -62,18 +68,19 @@ namespace ArmNavigation.Infrastructure.Repositories
         {
             const string sql = """
                 UPDATE "Cars"
-                SET "RegNum" = @reg, "Gps-tracker" = @gps, "MedInstitutionId" = @orgId
-                WHERE "CarId" = @id AND "IsRemoved" = false
+                SET "RegNum" = @regNum, "Gps-tracker" = @gpsTracker, "MedInstitutionId" = @medInstitutionId
+                WHERE "CarId" = @carId AND "IsRemoved" = false
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", car.CarId);
-        parameters.Add("reg", car.RegNum);
-        parameters.Add("gps", car.GpsTracker);
-        parameters.Add("orgId", car.MedInstitutionId);
+            var parameters = new DynamicParameters();
+            parameters.Add("carId", car.CarId);
+            parameters.Add("regNum", car.RegNum);
+            parameters.Add("gpsTracker", car.GpsTracker);
+            parameters.Add("medInstitutionId", car.MedInstitutionId);
 
-        var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            int affectedRows = await ExecuteAsync(sql, parameters, ct);
+            bool wasUpdated = affectedRows > 0;
+            return wasUpdated;
         }
 
         public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct)
@@ -81,48 +88,57 @@ namespace ArmNavigation.Infrastructure.Repositories
             const string sql = """
                 UPDATE "Cars"
                 SET "IsRemoved" = true
-                WHERE "CarId" = @id AND "IsRemoved" = false
+                WHERE "CarId" = @carId AND "IsRemoved" = false
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", id);
+            var parameters = new DynamicParameters();
+            parameters.Add("carId", id);
 
-        var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            int affectedRows = await ExecuteAsync(sql, parameters, ct);
+            bool wasDeleted = affectedRows > 0;
+            return wasDeleted;
         }
 
-    public async Task<IEnumerable<Car>> GetAsync(string query, Guid? medInstitutionId, CancellationToken ct)
+        public async Task<IEnumerable<Car>> GetAsync(string query, Guid? medInstitutionId, CancellationToken ct)
         {
-            var whereOrg = medInstitutionId.HasValue ? "AND c.\"MedInstitutionId\" = @orgId" : string.Empty;
-            var sql = $"""
+            var sqlBuilder = new SqlBuilder();
+            var template = sqlBuilder.AddTemplate("""
                 SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
                 FROM "Cars" c
-                WHERE c."IsRemoved" = false
-                AND (c."RegNum" ILIKE @q OR c."Gps-tracker" ILIKE @q) {whereOrg}
-                """;
+                /**where**/
+                """);
 
-        var parameters = new DynamicParameters();
-        parameters.Add("q", $"%{query}%");
-        if (medInstitutionId.HasValue)
-            parameters.Add("orgId", medInstitutionId.Value);
+            sqlBuilder.Where("c.\"IsRemoved\" = false");
+            sqlBuilder.Where("(c.\"RegNum\" ILIKE @searchQuery OR c.\"Gps-tracker\" ILIKE @searchQuery)");
 
-        return await QueryAsync<Car>(sql, parameters, ct);
+            if (medInstitutionId.HasValue)
+            {
+                sqlBuilder.Where("c.\"MedInstitutionId\" = @medInstitutionId");
+            }
+
+            var parameters = new DynamicParameters();
+            parameters.Add("searchQuery", $"%{query}%");
+            if (medInstitutionId.HasValue)
+                parameters.Add("medInstitutionId", medInstitutionId.Value);
+
+            return await QueryAsync<Car>(template.RawSql, parameters, ct);
         }
 
         public async Task<bool> BindTrackerAsync(Guid carId, string tracker, CancellationToken ct)
         {
             const string sql = """
                 UPDATE "Cars"
-                SET "Gps-tracker" = @gps
-                WHERE "CarId" = @id AND "IsRemoved" = false
+                SET "Gps-tracker" = @gpsTracker
+                WHERE "CarId" = @carId AND "IsRemoved" = false
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", carId);
-        parameters.Add("gps", tracker);
+            var parameters = new DynamicParameters();
+            parameters.Add("carId", carId);
+            parameters.Add("gpsTracker", tracker);
 
-        var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            int affectedRows = await ExecuteAsync(sql, parameters, ct);
+            bool wasUpdated = affectedRows > 0;
+            return wasUpdated;
         }
 
         public async Task<bool> UnbindTrackerAsync(Guid carId, CancellationToken ct)
@@ -130,14 +146,15 @@ namespace ArmNavigation.Infrastructure.Repositories
             const string sql = """
                 UPDATE "Cars"
                 SET "Gps-tracker" = NULL
-                WHERE "CarId" = @id AND "IsRemoved" = false
+                WHERE "CarId" = @carId AND "IsRemoved" = false
                 """;
 
-        var parameters = new DynamicParameters();
-        parameters.Add("id", carId);
+            var parameters = new DynamicParameters();
+            parameters.Add("carId", carId);
 
-        var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            int affectedRows = await ExecuteAsync(sql, parameters, ct);
+            bool wasUpdated = affectedRows > 0;
+            return wasUpdated;
         }
     }
 }
