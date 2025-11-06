@@ -1,0 +1,1 @@
+﻿public sealed record UpdateUserRequest(string Login, string? Password, int Role, Guid MedInstitutionId);

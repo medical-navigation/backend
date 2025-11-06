@@ -1,0 +1,1 @@
+public sealed record CreateCarRequest(string RegNum, Guid MedInstitutionId, string? GpsTracker);

@@ -1,82 +1,97 @@
-using System.Data;
 using ArnNavigation.Application.Repositories;
 using ArmNavigation.Domain.Models;
 using Dapper;
-using Npgsql;
 
-namespace ArmNavigation.Infrastructure.Repositories
+namespace ArmNavigation.Infrastructure.Repositories;
+
+public sealed class MedInstitutionRepository : BaseRepository, IMedInstitutionRepository
 {
-    public sealed class MedInstitutionRepository : IMedInstitutionRepository
+    public async Task<IEnumerable<MedInstitution>> GetAllAsync(CancellationToken ct)
     {
-        private const string ConnectionEnv = "POSTGRES_CONNECTION_STRING";
+        const string sql = """
+            SELECT "MedInstitutionId", "Name", "IsRemoved"
+            FROM "MedInstitutions"
+            WHERE "IsRemoved" = false
+            """;
 
-        private static string GetConnectionString()
-        {
-            var cs = Environment.GetEnvironmentVariable(ConnectionEnv);
-            if (string.IsNullOrWhiteSpace(cs))
-            {
-                throw new InvalidOperationException($"Environment variable {ConnectionEnv} is not set.");
-            }
-            return cs;
-        }
+        return await QueryAsync<MedInstitution>(sql, ct: ct);
+    }
 
-        private static IDbConnection CreateConnection()
-        {
-            return new NpgsqlConnection(GetConnectionString());
-        }
+    public async Task<IEnumerable<MedInstitution>> GetAllByNameAsync(string? nameFilter, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(nameFilter))
+            return await GetAllAsync(ct);
 
-        public async Task<IEnumerable<MedInstitution>> GetAllAsync(CancellationToken cancellationToken)
-        {
-            const string sql = "SELECT \"MedInstitutionId\", \"Name\", \"IsRemoved\" FROM \"MedInstitutions\" WHERE \"IsRemoved\" = false";
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            return await conn.QueryAsync<MedInstitution>(new CommandDefinition(sql, cancellationToken: cancellationToken));
-        }
+        const string sql = """
+            SELECT "MedInstitutionId", "Name", "IsRemoved"
+            FROM "MedInstitutions"
+            WHERE "IsRemoved" = false AND "Name" ILIKE @name
+            """;
 
-        public async Task<IEnumerable<MedInstitution>> GetAllByNameAsync(string? nameFilter, CancellationToken cancellationToken)
-        {
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            if (string.IsNullOrWhiteSpace(nameFilter))
-            {
-                return await GetAllAsync(cancellationToken);
-            }
+        var parameters = new DynamicParameters();
+        parameters.Add("name", $"%{nameFilter}%");
 
-            const string sql = "SELECT \"MedInstitutionId\", \"Name\", \"IsRemoved\" FROM \"MedInstitutions\" WHERE \"IsRemoved\" = false AND \"Name\" ILIKE @name";
-            return await conn.QueryAsync<MedInstitution>(new CommandDefinition(sql, new { name = $"%{nameFilter}%" }, cancellationToken: cancellationToken));
-        }
+        return await QueryAsync<MedInstitution>(sql, parameters, ct);
+    }
 
-        public async Task<MedInstitution?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        {
-            const string sql = "SELECT \"MedInstitutionId\", \"Name\", \"IsRemoved\" FROM \"MedInstitutions\" WHERE \"MedInstitutionId\" = @id AND \"IsRemoved\" = false";
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            return await conn.QuerySingleOrDefaultAsync<MedInstitution>(new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
-        }
+    public async Task<MedInstitution?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT "MedInstitutionId", "Name", "IsRemoved"
+            FROM "MedInstitutions"
+            WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
+            """;
 
-        public async Task<Guid> CreateAsync(MedInstitution medInstitution, CancellationToken cancellationToken)
-        {
-            var id = medInstitution.MedInstitutionId != Guid.Empty ? medInstitution.MedInstitutionId : Guid.NewGuid();
-            const string sql = "INSERT INTO \"MedInstitutions\" (\"MedInstitutionId\", \"Name\", \"IsRemoved\") VALUES (@id, @name, false)";
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            await conn.ExecuteAsync(new CommandDefinition(sql, new { id, name = medInstitution.Name }, cancellationToken: cancellationToken));
-            return id;
-        }
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
 
-        public async Task<bool> UpdateAsync(MedInstitution medInstitution, CancellationToken cancellationToken)
-        {
-            const string sql = "UPDATE \"MedInstitutions\" SET \"Name\" = @name WHERE \"MedInstitutionId\" = @id AND \"IsRemoved\" = false";
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            var affected = await conn.ExecuteAsync(new CommandDefinition(sql, new { id = medInstitution.MedInstitutionId, name = medInstitution.Name }, cancellationToken: cancellationToken));
-            return affected > 0;
-        }
+        return await QuerySingleOrDefaultAsync<MedInstitution>(sql, parameters, ct);
+    }
 
-        public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken)
-        {
-            const string sql = "UPDATE \"MedInstitutions\" SET \"IsRemoved\" = true WHERE \"MedInstitutionId\" = @id AND \"IsRemoved\" = false";
-            await using var conn = (NpgsqlConnection)CreateConnection();
-            var affected = await conn.ExecuteAsync(new CommandDefinition(sql, new { id }, cancellationToken: cancellationToken));
-            return affected > 0;
-        }
+    public async Task<Guid> CreateAsync(MedInstitution medInstitution, CancellationToken ct)
+    {
+        var id = medInstitution.MedInstitutionId != Guid.Empty ? medInstitution.MedInstitutionId : Guid.NewGuid();
+        const string sql = """
+            INSERT INTO "MedInstitutions" ("MedInstitutionId", "Name", "IsRemoved")
+            VALUES (@id, @name, false)
+            """;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
+        parameters.Add("name", medInstitution.Name);
+
+        await ExecuteAsync(sql, parameters, ct);
+        return id;
+    }
+
+    public async Task<bool> UpdateAsync(MedInstitution medInstitution, CancellationToken ct)
+    {
+        const string sql = """
+            UPDATE "MedInstitutions"
+            SET "Name" = @name
+            WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
+            """;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("id", medInstitution.MedInstitutionId);
+        parameters.Add("name", medInstitution.Name);
+
+        var affected = await ExecuteAsync(sql, parameters, ct);
+        return affected > 0;
+    }
+
+    public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct)
+    {
+        const string sql = """
+            UPDATE "MedInstitutions"
+            SET "IsRemoved" = true
+            WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
+            """;
+
+        var parameters = new DynamicParameters();
+        parameters.Add("id", id);
+
+        var affected = await ExecuteAsync(sql, parameters, ct);
+        return affected > 0;
     }
 }
-
-
-
