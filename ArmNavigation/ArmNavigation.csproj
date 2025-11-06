@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ArmNavigation.Infrastructure.Migrator\ArmNavigation.Infrastructure.Migrator.csproj" />
+    <ProjectReference Include="..\ArmNavigation.Infrastructure.Postgres\ArmNavigation.Infrastructure.Postgres.csproj" />
     <ProjectReference Include="..\ArmNavigation.Infrastructure\ArmNavigation.Infrastructure.Postgres.csproj" />
     <ProjectReference Include="..\ArmNaviagtion.Presentation\ArmNavigation.Presentation.csproj" />
   </ItemGroup>

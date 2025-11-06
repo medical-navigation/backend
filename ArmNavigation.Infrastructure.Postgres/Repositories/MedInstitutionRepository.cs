@@ -13,8 +13,7 @@ namespace ArmNavigation.Infrastructure.Repositories
             FROM "MedInstitutions"
             WHERE "IsRemoved" = false
             """;
-
-            return await QueryAsync<MedInstitution>(sql, ct: ct);
+            return await ExecuteQueryAsync<MedInstitution>(sql, ct: ct);
         }
 
         public async Task<IEnumerable<MedInstitution>> GetAllByNameAsync(string? nameFilter, CancellationToken ct)
@@ -28,10 +27,7 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "IsRemoved" = false AND "Name" ILIKE @name
             """;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("name", $"%{nameFilter}%");
-
-            return await QueryAsync<MedInstitution>(sql, parameters, ct);
+            return await ExecuteQueryAsync<MedInstitution>(sql, new { name = $"%{nameFilter}%" }, ct);
         }
 
         public async Task<MedInstitution?> GetByIdAsync(Guid id, CancellationToken ct)
@@ -41,9 +37,7 @@ namespace ArmNavigation.Infrastructure.Repositories
             FROM "MedInstitutions"
             WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
             """;
-            var parameters = new DynamicParameters();
-            parameters.Add("id", id);
-            return await QuerySingleOrDefaultAsync<MedInstitution>(sql, parameters, ct);
+            return await ExecuteQuerySingleOrDefaultAsync<MedInstitution>(sql, new { id }, ct);
         }
 
         public async Task<Guid> CreateAsync(MedInstitution medInstitution, CancellationToken ct)
@@ -52,17 +46,13 @@ namespace ArmNavigation.Infrastructure.Repositories
             const string sql = """
             INSERT INTO "MedInstitutions" ("MedInstitutionId", "Name", "IsRemoved")
             VALUES (@id, @name, false)
+            RETURNING "MedInstitutionId"
             """;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("id", id);
-            parameters.Add("name", medInstitution.Name);
-
-            await ExecuteAsync(sql, parameters, ct);
-            return id;
+            return await ExecuteScalarAsync<Guid>(sql, new { id, name = medInstitution.Name }, ct);
         }
 
-        public async Task<bool> UpdateAsync(MedInstitution medInstitution, CancellationToken ct)
+        public async Task UpdateAsync(MedInstitution medInstitution, CancellationToken ct)
         {
             const string sql = """
             UPDATE "MedInstitutions"
@@ -70,15 +60,10 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
             """;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("id", medInstitution.MedInstitutionId);
-            parameters.Add("name", medInstitution.Name);
-
-            var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            await ExecuteNonQueryAsync(sql, new { id = medInstitution.MedInstitutionId, name = medInstitution.Name }, ct);
         }
 
-        public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken ct)
+        public async Task SoftDeleteAsync(Guid id, CancellationToken ct)
         {
             const string sql = """
             UPDATE "MedInstitutions"
@@ -86,11 +71,7 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "MedInstitutionId" = @id AND "IsRemoved" = false
             """;
 
-            var parameters = new DynamicParameters();
-            parameters.Add("id", id);
-
-            var affected = await ExecuteAsync(sql, parameters, ct);
-            return affected > 0;
+            await ExecuteNonQueryAsync(sql, new { id }, ct);
         }
     }
 }

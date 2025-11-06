@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22 d17.14
+VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArmNavigation", "ArmNavigation\ArmNavigation.csproj", "{27B60C72-6D0B-47CC-B417-70B5A9E2BD73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArmNavigation.Infrastructure.Postgres", "ArmNavigation.Infrastructure\ArmNavigation.Infrastructure.Postgres.csproj", "{F3D304EB-2B67-4CDE-853D-10EA6544C455}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArmNavigation.Infrastructure.Postgres", "ArmNavigation.Infrastructure.Postgres\ArmNavigation.Infrastructure.Postgres.csproj", "{F3D304EB-2B67-4CDE-853D-10EA6544C455}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArnNavigation.Application", "ArnNavigation.Application\ArnNavigation.Application.csproj", "{63FEE0CA-F325-489E-AA8A-39A46F156E88}"
 EndProject

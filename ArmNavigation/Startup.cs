@@ -1,12 +1,10 @@
-﻿using ArmNavigation.Infrastructure.Postgres.Extensions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
 using ArnNavigation.Application.Services;
 using ArmNavigation.Services;
+using ArmNavigation.Infrastructure.Postgres.Extensions;
 
 namespace ArmNavigation;
 
