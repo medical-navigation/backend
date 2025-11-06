@@ -4,8 +4,8 @@ using ArmNavigation.Domain.Models;
 using Dapper;
 using Npgsql;
 
-namespace ArmNavigation.Infrastructure.Repositories;
-
+namespace ArmNavigation.Infrastructure.Repositories
+{
     public sealed class CarRepository : BaseRepository, ICarRepository
     {
 
@@ -141,6 +141,3 @@ namespace ArmNavigation.Infrastructure.Repositories;
         }
     }
 }
-
-
-

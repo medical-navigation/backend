@@ -1,11 +1,10 @@
-using ArnNavigation.Application.Services;
 using ArmNavigation.Domain.Enums;
 using ArmNavigation.Domain.Models;
+using ArnNavigation.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
-namespace ArmNaviagtion.Presentation.Controllers
+namespace ArmNavigation.Presentation.Controllers
 {
     [ApiController]
     [Route("api/cars")]
@@ -13,95 +12,92 @@ namespace ArmNaviagtion.Presentation.Controllers
     public sealed class CarsController : ControllerBase
     {
         private readonly ICarsService _service;
+        private readonly UserRoleInfo _currentUser;
 
-        public CarsController(ICarsService service)
+        public CarsController(ICarsService service, UserRoleInfo currentUser)
         {
             _service = service;
+            _currentUser = currentUser; // ¬недр€ем через DI Ч без парсинга claims
         }
 
+        private ActionResult<ResponseModel> Success() => Ok(new ResponseModel { Success = true });
+        private ActionResult<ResponseModel> NotFoundResponse() => NotFound(new ResponseModel { Success = false, Error = "Not found" });
+        private ActionResult<ResponseModel<T>> NotFoundResponse<T>() =>
+            NotFound(new ResponseModel<T> { Success = false, Error = "Not found" });
+        private ActionResult<ResponseModel<T>> OkData<T>(T data) => Ok(new ResponseModel<T> { Success = true, Data = data });
+        private ActionResult<ResponseModel> Error(string message) => BadRequest(new ResponseModel { Success = false, Error = message });
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Car>>> List([FromQuery] Guid? orgId, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel<IEnumerable<Car>>>> List([FromQuery] Guid? orgId, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var result = await _service.ListAsync(role, org, orgId, ct);
-            return Ok(result);
+            var result = await _service.ListAsync(_currentUser.Role, _currentUser.MedInstitutionId, orgId, ct);
+            return OkData(result);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<Car?>> Get(Guid id, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel<Car>>> Get(Guid id, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var entity = await _service.GetAsync(id, role, org, ct);
-            if (entity is null) return NotFound(new ErrorResponse(404, "Car not found"));
-            return Ok(entity);
+            var entity = await _service.GetAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, ct);
+            return entity is null
+                ? NotFoundResponse<Car>()
+                : OkData(entity);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Guid>> Create([FromBody] CreateCarRequest request, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel<Guid>>> Create([FromBody] CreateCarRequest request, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var id = await _service.CreateAsync(request.RegNum, request.MedInstitutionId, request.GpsTracker, role, org, ct);
-            return CreatedAtAction(nameof(Get), new { id }, id);
+            var id = await _service.CreateAsync(
+                request.RegNum,
+                request.MedInstitutionId,
+                request.GpsTracker,
+                _currentUser.Role,
+                _currentUser.MedInstitutionId,
+                ct);
+
+            return OkData(id);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<ActionResult> Update(Guid id, [FromBody] UpdateCarRequest request, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel>> Update(Guid id, [FromBody] UpdateCarRequest request, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var ok = await _service.UpdateAsync(id, request.RegNum, request.MedInstitutionId, request.GpsTracker, role, org, ct);
-            if (!ok) return NotFound();
-            return NoContent();
+            var success = await _service.UpdateAsync(
+                id,
+                request.RegNum,
+                request.MedInstitutionId,
+                request.GpsTracker,
+                _currentUser.Role,
+                _currentUser.MedInstitutionId,
+                ct);
+
+            return success ? Success() : NotFoundResponse();
         }
 
         [HttpDelete("{id:guid}")]
-        public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel>> Delete(Guid id, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var ok = await _service.RemoveAsync(id, role, org, ct);
-            if (!ok) return NotFound();
-            return NoContent();
+            var success = await _service.RemoveAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, ct);
+            return success ? Success() : NotFoundResponse();
         }
 
         [HttpGet("get")]
-        public async Task<ActionResult<IEnumerable<Car>>> GetCars([FromQuery] string query, [FromQuery] Guid? orgId, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel<IEnumerable<Car>>>> GetCars([FromQuery] string query, [FromQuery] Guid? orgId, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var result = await _service.GetAsync(query, role, org, orgId, ct);
-            return Ok(result);
+            var result = await _service.GetAsync(query, _currentUser.Role, _currentUser.MedInstitutionId, orgId, ct);
+            return OkData(result);
         }
 
-        /// <summary>
-        /// Request model for binding a GPS tracker to a cargit status
-        /// </summary>
-
         [HttpPost("bind-tracker/{id:guid}")]
-        public async Task<ActionResult> BindTracker(Guid id, [FromBody] BindTrackerRequest request, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel>> BindTracker(Guid id, [FromBody] BindTrackerRequest request, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var ok = await _service.BindTrackerAsync(id, request.Tracker, role, org, ct);
-            if (!ok) return NotFound();
-            return NoContent();
+            var success = await _service.BindTrackerAsync(id, request.Tracker, _currentUser.Role, _currentUser.MedInstitutionId, ct);
+            return success ? Success() : NotFoundResponse();
         }
 
         [HttpPost("unbind-tracker/{id:guid}")]
-        public async Task<ActionResult> UnbindTracker(Guid id, CancellationToken ct)
+        public async Task<ActionResult<ResponseModel>> UnbindTracker(Guid id, CancellationToken ct)
         {
-            (int role, Guid org) = GetContext(User);
-            var ok = await _service.UnbindTrackerAsync(id, role, org, ct);
-            if (!ok) return NotFound();
-            return NoContent();
-        }
-
-        private static (int role, Guid org) GetContext(ClaimsPrincipal user)
-        {
-            var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
-            var orgClaim = user.FindFirst("org")?.Value;
-            var role = int.TryParse(roleClaim, out var r) ? r : (int)Role.Dispatcher;
-            var org = Guid.TryParse(orgClaim, out var g) ? g : Guid.Empty;
-            return (role, org);
+            var success = await _service.UnbindTrackerAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, ct);
+            return success ? Success() : NotFoundResponse();
         }
     }
 }
-
-
-
