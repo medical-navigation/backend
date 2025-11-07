@@ -28,3 +28,13 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+.dockerignore
+Dockerfile
+docker-compose*
+.git
+.gitignore
+.vscode
+bin/
+obj/
+*.user
+*.dcproj
