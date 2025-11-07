@@ -20,27 +20,18 @@ namespace ArmNavigation.Presentation.Controllers
             _currentUser = currentUser;
         }
 
-        private ActionResult<ResponseModel> Success() => Ok(new ResponseModel { Success = true });
-        private ActionResult<ResponseModel> NotFoundResponse() => NotFound(new ResponseModel { Success = false, Error = "Not found" });
-        private ActionResult<ResponseModel<T>> NotFoundResponse<T>() =>
-            NotFound(new ResponseModel<T> { Success = false, Error = "Not found" });
-        private ActionResult<ResponseModel<T>> OkData<T>(T data) => Ok(new ResponseModel<T> { Success = true, Data = data });
-        private ActionResult<ResponseModel> Error(string message) => BadRequest(new ResponseModel { Success = false, Error = message });
-
         [HttpGet]
         public async Task<ActionResult<ResponseModel<IEnumerable<Car>>>> List([FromQuery] Guid? orgId, CancellationToken token)
         {
             var result = await _service.ListAsync(_currentUser.Role, _currentUser.MedInstitutionId, orgId, token);
-            return OkData(result);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ResponseModel<Car>>> Get(Guid id, CancellationToken token)
         {
             var entity = await _service.GetAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, token);
-            return entity is null
-                ? NotFoundResponse<Car>()
-                : OkData(entity);
+            return entity is null ? NotFound() : Ok(entity);
         }
 
         [HttpPost]
@@ -54,7 +45,7 @@ namespace ArmNavigation.Presentation.Controllers
                 _currentUser.MedInstitutionId,
                 token);
 
-            return OkData(id);
+            return Ok(id);
         }
 
         [HttpPut("{id:guid}")]
@@ -69,35 +60,35 @@ namespace ArmNavigation.Presentation.Controllers
                 _currentUser.MedInstitutionId,
                 token);
 
-            return (success != null) ? Success() : NotFoundResponse();
+            return (success != null) ? Ok(success) : NotFound();
         }
 
         [HttpDelete("{id:guid}")]
         public async Task<ActionResult<ResponseModel>> Delete(Guid id, CancellationToken token)
         {
             var success = await _service.RemoveAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, token);
-            return (success != null) ? Success() : NotFoundResponse();
+            return success != null ? Ok(success) : NotFound();
         }
 
         [HttpGet("get")]
         public async Task<ActionResult<ResponseModel<IEnumerable<Car>>>> GetCars([FromQuery] string query, [FromQuery] Guid? orgId, CancellationToken token)
         {
             var result = await _service.GetAsync(query, _currentUser.Role, _currentUser.MedInstitutionId, orgId, token);
-            return OkData(result);
+            return Ok(result);
         }
 
         [HttpPost("bind-tracker/{id:guid}")]
         public async Task<ActionResult<ResponseModel>> BindTracker(Guid id, [FromBody] BindTrackerRequest request, CancellationToken token)
         {
             var success = await _service.BindTrackerAsync(id, request.Tracker, _currentUser.Role, _currentUser.MedInstitutionId, token);
-            return (success != null) ? Success() : NotFoundResponse();
+            return success != null ? Ok(success) : NotFound();
         }
 
         [HttpPost("unbind-tracker/{id:guid}")]
         public async Task<ActionResult<ResponseModel>> UnbindTracker(Guid id, CancellationToken token)
         {
             var success = await _service.UnbindTrackerAsync(id, _currentUser.Role, _currentUser.MedInstitutionId, token);
-            return (success != null) ? Success() : NotFoundResponse();
+            return success != null ? Ok(success) : NotFound();
         }
     }
 }

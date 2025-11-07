@@ -1,6 +1,7 @@
-using ArnNavigation.Application.Services;
 using ArmNavigation.Domain.Enums;
 using ArmNavigation.Domain.Models;
+using ArmNavigation.Presentation.Controllers;
+using ArnNavigation.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -41,7 +42,7 @@ namespace ArmNaviagtion.Presentation.Controllers
         {
             int role = GetRoleFromUser(User);
             var id = await _service.CreateAsync(request.Name, role, token);
-            return CreatedAtAction(nameof(Get), new { id }, id);
+            return Ok(id);
         }
 
         [HttpPut("{id:guid}")]
@@ -50,7 +51,7 @@ namespace ArmNaviagtion.Presentation.Controllers
             int role = GetRoleFromUser(User);
             var ok = await _service.UpdateAsync(id, request.Name, role, token);
             if (ok == null) return NotFound();
-            return NoContent();
+            return Ok(ok);
         }
 
         [HttpDelete("{id:guid}")]
@@ -59,7 +60,7 @@ namespace ArmNaviagtion.Presentation.Controllers
             int role = GetRoleFromUser(User);
             var ok = await _service.RemoveAsync(id, role, token);
             if (ok == null) return NotFound();
-            return NoContent();
+            return Ok(ok);
         }
 
         private static int GetRoleFromUser(ClaimsPrincipal user)
