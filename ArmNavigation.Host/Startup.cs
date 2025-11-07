@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using ArmNavigation.Infrastructure.Postgres.Extensions;
+using ArmNavigation.Infrastructure.Postgres.Repositories;
+using ArmNavigation.Services;
+using ArnNavigation.Application.Repositories;
+using ArnNavigation.Application.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Text;
-using ArnNavigation.Application.Services;
-using ArmNavigation.Services;
-using ArmNavigation.Infrastructure.Postgres.Extensions;
 
 namespace ArmNavigation;
 
@@ -37,23 +39,23 @@ public class Startup(IConfiguration configuration)
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
             {
+                new OpenApiSecurityScheme
                 {
-                    new OpenApiSecurityScheme
+                    Reference = new OpenApiReference
                     {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
-            });
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
         });
 
-        // JWT authentication (parameters will be finalized when issuing tokens)
-        var jwtKey = _configuration["Jwt:Key"] ?? "CHANGE_ME_DEV_KEY";
+        // JWT authentication
+        var jwtKey = _configuration["Jwt:Key"] ?? "your_super_secret_key_that_is_at_least_32_characters_long!";
         var jwtIssuer = _configuration["Jwt:Issuer"] ?? "ArmNavigation";
         var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -75,6 +77,20 @@ public class Startup(IConfiguration configuration)
                     ValidIssuer = jwtIssuer,
                     IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        Console.WriteLine("Token validated successfully");
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         service.AddAuthorization();
@@ -83,19 +99,35 @@ public class Startup(IConfiguration configuration)
         service.AddScoped<JwtTokenService>();
         service.AddScoped<IAuthService, JwtAuthService>();
         service.AddScoped<IPasswordHasher, PasswordHasher>();
+        service.AddScoped<IUsersService, UsersService>();
+        service.AddScoped<ICarsService, CarsService>();
+        service.AddScoped<IMedInstitutionService, MedInstitutionService>();
+
+        // Repositories
+        service.AddScoped<IUserRepository, UserRepository>();
+        service.AddScoped<ICarRepository, CarRepository>();
+        service.AddScoped<IMedInstitutionRepository, MedInstitutionRepository>();
 
         service.ConfigurePostgresInfrastructure();
     }
 
-    public void Configure(IApplicationBuilder applicationBuilder)
+    public void Configure(IApplicationBuilder applicationBuilder, IWebHostEnvironment env)
     {
+        if (env.IsDevelopment())
+        {
+            applicationBuilder.UseDeveloperExceptionPage();
+        }
+
         applicationBuilder.UseRouting();
 
         applicationBuilder.UseSwagger();
         applicationBuilder.UseSwaggerUI();
+
         applicationBuilder.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
         applicationBuilder.UseAuthentication();
         applicationBuilder.UseAuthorization();
+
         applicationBuilder.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
