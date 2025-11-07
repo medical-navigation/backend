@@ -20,48 +20,48 @@ namespace ArmNaviagtion.Presentation.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<MedInstitution>>> List([FromQuery] string? name, CancellationToken ct)
+        public async Task<ActionResult<IEnumerable<MedInstitution>>> List([FromQuery] string? name, CancellationToken token)
         {
             int role = GetRoleFromUser(User);
-            var result = await _service.ListAsync(name, role, ct);
+            var result = await _service.ListAsync(name, role, token);
             return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
         [Authorize]
-        public async Task<ActionResult<MedInstitution?>> Get(Guid id, CancellationToken ct)
+        public async Task<ActionResult<MedInstitution?>> Get(Guid id, CancellationToken token)
         {
             int role = GetRoleFromUser(User);
-            var entity = await _service.GetAsync(id, role, ct);
+            var entity = await _service.GetAsync(id, role, token);
             if (entity is null) return NotFound();
             return Ok(entity);
         }
 
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<Guid>> Create([FromBody] CreateMedInstitutionRequest request, CancellationToken ct)
+        public async Task<ActionResult<Guid>> Create([FromBody] CreateMedInstitutionRequest request, CancellationToken token)
         {
             int role = GetRoleFromUser(User);
-            var id = await _service.CreateAsync(request.Name, role, ct);
+            var id = await _service.CreateAsync(request.Name, role, token);
             return CreatedAtAction(nameof(Get), new { id }, id);
         }
 
         [HttpPut("{id:guid}")]
         [Authorize]
-        public async Task<ActionResult> Update(Guid id, [FromBody] UpdateMedInstitutionRequest request, CancellationToken ct)
+        public async Task<ActionResult> Update(Guid id, [FromBody] UpdateMedInstitutionRequest request, CancellationToken token)
         {
             int role = GetRoleFromUser(User);
-            var ok = await _service.UpdateAsync(id, request.Name, role, ct);
+            var ok = await _service.UpdateAsync(id, request.Name, role, token);
             if (!ok) return NotFound();
             return NoContent();
         }
 
         [HttpDelete("{id:guid}")]
         [Authorize]
-        public async Task<ActionResult> Delete(Guid id, CancellationToken ct)
+        public async Task<ActionResult> Delete(Guid id, CancellationToken token)
         {
             int role = GetRoleFromUser(User);
-            var ok = await _service.RemoveAsync(id, role, ct);
+            var ok = await _service.RemoveAsync(id, role, token);
             if (!ok) return NotFound();
             return NoContent();
         }

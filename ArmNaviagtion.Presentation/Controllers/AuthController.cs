@@ -17,9 +17,9 @@ namespace ArmNaviagtion.Presentation.Controllers
         public sealed record LoginRequest(string Login, string Password);
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login([FromBody] LoginRequest request, CancellationToken ct)
+        public async Task<ActionResult<string>> Login([FromBody] LoginRequest request, CancellationToken token)
         {
-            var token = await _authService.LoginAsync(request.Login, request.Password, ct);
+            var token = await _authService.LoginAsync(request.Login, request.Password, token);
             if (token is null) return Unauthorized();
             return Ok(token);
         }

@@ -16,21 +16,21 @@ namespace ArnNavigation.Application.Services
             _passwordHasher = passwordHasher;
         }
 
-        public Task<IEnumerable<User>> ListAsync(int requesterRole, Guid requesterOrgId, Guid? orgId, CancellationToken ct)
+        public Task<IEnumerable<User>> ListAsync(int requesterRole, Guid requesterOrgId, Guid? orgId, CancellationToken token)
         {
             var scopeOrg = requesterRole == (int)Role.SuperAdmin ? orgId : requesterOrgId;
-            return _users.GetAllByOrgAsync(scopeOrg, ct);
+            return _users.GetAllByOrgAsync(scopeOrg, token);
         }
 
-        public async Task<User?> GetAsync(Guid id, int requesterRole, Guid requesterOrgId, CancellationToken ct)
+        public async Task<User?> GetAsync(Guid id, int requesterRole, Guid requesterOrgId, CancellationToken token)
         {
-            var u = await _users.GetByIdAsync(id, ct);
+            var u = await _users.GetByIdAsync(id, token);
             if (u is null) return null;
             if (requesterRole != (int)Role.SuperAdmin && u.MedInstitutionId != requesterOrgId) return null;
             return u;
         }
 
-        public async Task<Guid> CreateAsync(string login, string passwordPlain, int role, Guid orgId, int requesterRole, Guid requesterOrgId, CancellationToken ct)
+        public async Task<Guid> CreateAsync(string login, string passwordPlain, int role, Guid orgId, int requesterRole, Guid requesterOrgId, CancellationToken token)
         {
             if (requesterRole != (int)Role.SuperAdmin && requesterOrgId != orgId) throw new UnauthorizedAccessException();
             var hashed = _passwordHasher.Hash(passwordPlain);
@@ -43,12 +43,12 @@ namespace ArnNavigation.Application.Services
                 Role = role,
                 IsRemoved = false
             };
-            return await _users.CreateAsync(entity, ct);
+            return await _users.CreateAsync(entity, token);
         }
 
-        public async Task<bool> UpdateAsync(Guid id, string login, string? passwordPlain, int role, Guid orgId, int requesterRole, Guid requesterOrgId, CancellationToken ct)
+        public async Task<bool> UpdateAsync(Guid id, string login, string? passwordPlain, int role, Guid orgId, int requesterRole, Guid requesterOrgId, CancellationToken token)
         {
-            var existing = await _users.GetByIdAsync(id, ct);
+            var existing = await _users.GetByIdAsync(id, token);
             if (existing is null) return false;
             if (requesterRole != (int)Role.SuperAdmin && existing.MedInstitutionId != requesterOrgId) throw new UnauthorizedAccessException();
 
@@ -62,15 +62,15 @@ namespace ArnNavigation.Application.Services
                 Role = role,
                 IsRemoved = false
             };
-            return await _users.UpdateAsync(updated, ct);
+            return await _users.UpdateAsync(updated, token);
         }
 
-        public async Task<bool> RemoveAsync(Guid id, int requesterRole, Guid requesterOrgId, CancellationToken ct)
+        public async Task<bool> RemoveAsync(Guid id, int requesterRole, Guid requesterOrgId, CancellationToken token)
         {
-            var existing = await _users.GetByIdAsync(id, ct);
+            var existing = await _users.GetByIdAsync(id, token);
             if (existing is null) return false;
             if (requesterRole != (int)Role.SuperAdmin && existing.MedInstitutionId != requesterOrgId) throw new UnauthorizedAccessException();
-            return await _users.SoftDeleteAsync(id, ct);
+            return await _users.SoftDeleteAsync(id, token);
         }
     }
 }

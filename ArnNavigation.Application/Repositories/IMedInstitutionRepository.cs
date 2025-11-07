@@ -8,8 +8,8 @@ namespace ArnNavigation.Application.Repositories
         Task<IEnumerable<MedInstitution>> GetAllByNameAsync(string? nameFilter, CancellationToken cancellationToken);
         Task<MedInstitution?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
         Task<Guid> CreateAsync(MedInstitution medInstitution, CancellationToken cancellationToken);
-        Task UpdateAsync(MedInstitution medInstitution, CancellationToken ct);
-        Task SoftDeleteAsync(Guid id, CancellationToken ct);
+        Task<MedInstitution> UpdateAsync(MedInstitution medInstitution, CancellationToken token);
+        Task<MedInstitution> SoftDeleteAsync(Guid id, CancellationToken token);
     }
 }
 

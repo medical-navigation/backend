@@ -1,42 +1,40 @@
-using System.Data;
-using ArnNavigation.Application.Repositories;
 using ArmNavigation.Domain.Models;
+using ArnNavigation.Application.Repositories;
 using Dapper;
 using Npgsql;
+using System.Data;
+using System.Threading;
 
-namespace ArmNavigation.Infrastructure.Repositories
+namespace ArmNavigation.Infrastructure.Postgres.Repositories
 {
     public sealed class CarRepository : BaseRepository, ICarRepository
     {
-        public async Task<IEnumerable<Car>> GetAllByOrgAsync(Guid? medInstitutionId, CancellationToken ct)
+        public async Task<IEnumerable<Car>> GetAllByOrgAsync(Guid? medInstitutionId, CancellationToken cancellationToken)
         {
-            var sql = """
+            const string sql = """
             SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
             FROM "Cars" c
             WHERE c."IsRemoved" = false
             """;
 
-            object? param = null;
+            var parameters = new DynamicParameters();
             if (medInstitutionId.HasValue)
-            {
-                sql += " AND c.\"MedInstitutionId\" = @orgId";
-                param = new { orgId = medInstitutionId.Value };
-            }
+                parameters.Add("orgId", medInstitutionId.Value);
 
-            return await ExecuteQueryAsync<Car>(sql, param, ct);
+            return await ExecuteQueryAsync<Car>(sql, parameters, cancellationToken);
         }
 
-        public async Task<Car?> GetByIdAsync(Guid id, CancellationToken ct)
+        public async Task<Car?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             const string sql = """
             SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
             FROM "Cars" c
             WHERE c."CarId" = @id AND c."IsRemoved" = false
             """;
-            return await ExecuteQuerySingleOrDefaultAsync<Car>(sql, new { id }, ct);
+            return await ExecuteQuerySingleOrDefaultAsync<Car>(sql, new { id }, cancellationToken);
         }
 
-        public async Task<Guid> CreateAsync(Car car, CancellationToken ct)
+        public async Task<Guid> CreateAsync(Car car, CancellationToken cancellationToken)
         {
             var id = car.CarId != Guid.Empty ? car.CarId : Guid.NewGuid();
             const string sql = """
@@ -51,10 +49,10 @@ namespace ArmNavigation.Infrastructure.Repositories
                 reg = car.RegNum,
                 gps = car.GpsTracker,
                 orgId = car.MedInstitutionId
-            }, ct);
+            }, cancellationToken);
         }
 
-        public async Task UpdateAsync(Car car, CancellationToken ct)
+        public async Task<Car> UpdateAsync(Car car, CancellationToken cancellationToken)
         {
             const string sql = """
             UPDATE "Cars"
@@ -62,16 +60,18 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "CarId" = @id AND "IsRemoved" = false
             """;
 
-            await ExecuteNonQueryAsync(sql, new
+            await ExecuteNonQueryAsync<Car>(sql, new
             {
                 id = car.CarId,
                 reg = car.RegNum,
                 gps = car.GpsTracker,
                 orgId = car.MedInstitutionId
-            }, ct);
+            }, cancellationToken);
+
+            return car;
         }
 
-        public async Task SoftDeleteAsync(Guid id, CancellationToken ct)
+        public async Task<Car> SoftDeleteAsync(Guid id, CancellationToken cancellationToken)
         {
             const string sql = """
             UPDATE "Cars"
@@ -79,30 +79,26 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "CarId" = @id AND "IsRemoved" = false
             """;
 
-            await ExecuteNonQueryAsync(sql, new { id }, ct);
+            return await ExecuteNonQueryAsync<Car>(sql, new { id }, cancellationToken);
         }
 
-        public async Task<IEnumerable<Car>> GetAsync(string query, Guid? medInstitutionId, CancellationToken ct)
+        public async Task<IEnumerable<Car>> GetAsync(string query, Guid? medInstitutionId, CancellationToken cancellationToken)
         {
-            var sql = """
+            const string sql = """
                 SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
                 FROM "Cars" c
                 WHERE c."IsRemoved" = false
                   AND (c."RegNum" ILIKE @q OR c."Gps-tracker" ILIKE @q)
                 """;
 
-            object param = new { q = $"%{query}%" };
-
+            var parameters = new DynamicParameters();
             if (medInstitutionId.HasValue)
-            {
-                sql += " AND c.\"MedInstitutionId\" = @orgId";
-                param = new { q = $"%{query}%", orgId = medInstitutionId.Value };
-            }
+                parameters.Add("orgId", medInstitutionId.Value);
 
-            return await ExecuteQueryAsync<Car>(sql, param, ct);
+            return await ExecuteQueryAsync<Car>(sql, parameters, cancellationToken);
         }
 
-        public async Task BindTrackerAsync(Guid carId, string tracker, CancellationToken ct)
+        public async Task<Car> BindTrackerAsync(Guid carId, string tracker, CancellationToken cancellationToken)
         {
             const string sql = """
             UPDATE "Cars"
@@ -110,10 +106,10 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "CarId" = @id AND "IsRemoved" = false
             """;
 
-            await ExecuteNonQueryAsync(sql, new { id = carId, gps = tracker }, ct);
+            return await ExecuteNonQueryAsync<Car>(sql, new { id = carId, gps = tracker }, cancellationToken);
         }
 
-        public async Task UnbindTrackerAsync(Guid carId, CancellationToken ct)
+        public async Task<Car> UnbindTrackerAsync(Guid carId, CancellationToken cancellationToken)
         {
             const string sql = """
             UPDATE "Cars"
@@ -121,7 +117,7 @@ namespace ArmNavigation.Infrastructure.Repositories
             WHERE "CarId" = @id AND "IsRemoved" = false
             """;
 
-            await ExecuteNonQueryAsync(sql, new { id = carId }, ct);
+            return await ExecuteNonQueryAsync<Car>(sql, new { id = carId }, cancellationToken);
         }
     }
 }

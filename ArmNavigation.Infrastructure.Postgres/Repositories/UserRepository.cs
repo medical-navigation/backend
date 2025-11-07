@@ -1,122 +1,104 @@
 using ArnNavigation.Application.Repositories;
 using ArmNavigation.Domain.Models;
 using Dapper;
+using ArmNavigation.Infrastructure.Postgres.Mappers;
 
-namespace ArmNavigation.Infrastructure.Repositories;
-
-public sealed class UserRepository : BaseRepository, IUserRepository
+namespace ArmNavigation.Infrastructure.Postgres.Repositories
 {
-    private sealed class DbUserRow
+    public sealed class UserRepository : BaseRepository, IUserRepository
     {
-        public Guid UserId { get; init; }
-        public string Login { get; init; } = default!;
-        public string PasswordHash { get; init; } = default!;
-        public Guid MedInstitutionId { get; init; }
-        public bool IsRemoved { get; init; }
-        public int Role { get; init; }
-    }
-
-    private static User MapToUser(DbUserRow row) => new()
-    {
-        UserId = row.UserId,
-        Login = row.Login,
-        PasswordHash = row.PasswordHash,
-        MedInstitutionId = row.MedInstitutionId,
-        Role = row.Role,
-        IsRemoved = row.IsRemoved
-    };
-
-    public async Task<User?> GetByLoginAsync(string login, CancellationToken ct)
-    {
-        const string sql = """
+        public async Task<User?> GetByLoginAsync(string login, CancellationToken cancellationToken)
+        {
+            const string sql = """
             SELECT u."UserId", u."Login", u."Password" AS "PasswordHash", u."MedInstitutionId",
                    u."IsRemoved", u."Role"
             FROM "Users" u
             WHERE u."Login" = @login AND u."IsRemoved" = false
             """;
 
-        var row = await ExecuteQuerySingleOrDefaultAsync<DbUserRow>(sql, new { login }, ct);
-        return row is null ? null : MapToUser(row);
-    }
+            var row = await ExecuteQuerySingleOrDefaultAsync<User>(sql, new { login }, cancellationToken);
+            return row is null ? null : UserMapper.MapToUser(row);
+        }
 
-    public async Task<User?> GetByIdAsync(Guid id, CancellationToken ct)
-    {
-        const string sql = """
+        public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            const string sql = """
             SELECT u."UserId", u."Login", u."Password" AS "PasswordHash", u."MedInstitutionId",
                    u."IsRemoved", u."Role"
             FROM "Users" u
             WHERE u."UserId" = @id AND u."IsRemoved" = false
             """;
 
-        var row = await ExecuteQuerySingleOrDefaultAsync<DbUserRow>(sql, new { id }, ct);
-        return row is null ? null : MapToUser(row);
-    }
+            var row = await ExecuteQuerySingleOrDefaultAsync<User>(sql, new { id }, cancellationToken);
+            return row is null ? null : UserMapper.MapToUser(row);
+        }
 
-    public async Task<Guid> CreateAsync(User user, CancellationToken ct)
-    {
-        var id = user.UserId != Guid.Empty ? user.UserId : Guid.NewGuid();
-        const string sql = """
+        public async Task<Guid> CreateAsync(User user, CancellationToken cancellationToken)
+        {
+            var id = user.UserId != Guid.Empty ? user.UserId : Guid.NewGuid();
+            const string sql = """
             INSERT INTO "Users" ("UserId", "Login", "Password", "IsRemoved", "Role", "MedInstitutionId")
             VALUES (@id, @login, @password, false, @role, @orgId)
             RETURNING "UserId"
             """;
 
-        return await ExecuteScalarAsync<Guid>(sql, new
-        {
-            id,
-            login = user.Login,
-            password = user.PasswordHash,
-            role = user.Role,
-            orgId = user.MedInstitutionId
-        }, ct);
-    }
+            return await ExecuteScalarAsync<Guid>(sql, new
+            {
+                id,
+                login = user.Login,
+                password = user.PasswordHash,
+                role = user.Role,
+                orgId = user.MedInstitutionId
+            }, cancellationToken);
+        }
 
-    public async Task UpdateAsync(User user, CancellationToken ct)
-    {
-        const string sql = """
+        public async Task<User> UpdateAsync(User user, CancellationToken token)
+        {
+            const string sql = """
             UPDATE "Users"
             SET "Login" = @login, "Password" = @password, "Role" = @role, "MedInstitutionId" = @orgId
             WHERE "UserId" = @id AND "IsRemoved" = false
             """;
 
-        await ExecuteNonQueryAsync(sql, new
-        {
-            id = user.UserId,
-            login = user.Login,
-            password = user.PasswordHash,
-            role = user.Role,
-            orgId = user.MedInstitutionId
-        }, ct);
-    }
+            return await ExecuteNonQueryAsync<User>(sql, new
+            {
+                id = user.UserId,
+                login = user.Login,
+                password = user.PasswordHash,
+                role = user.Role,
+                orgId = user.MedInstitutionId
+            }, token);
+        }
 
-    public async Task SoftDeleteAsync(Guid id, CancellationToken ct)
-    {
-        const string sql = """
+        public async Task<User> SoftDeleteAsync(Guid id, CancellationToken token)
+        {
+            const string sql = """
             UPDATE "Users"
             SET "IsRemoved" = true
             WHERE "UserId" = @id AND "IsRemoved" = false
             """;
 
-        await ExecuteNonQueryAsync(sql, new { id }, ct);
-    }
+            return await ExecuteNonQueryAsync<User>(sql, new { id }, token);
+        }
 
-    public async Task<IEnumerable<User>> GetAllByOrgAsync(Guid? medInstitutionId, CancellationToken ct)
-    {
-        var sql = """
+        public async Task<IEnumerable<User>> GetAllByOrgAsync(Guid? medInstitutionId, CancellationToken token)
+        {
+            string sql = """
             SELECT u."UserId", u."Login", u."Password" AS "PasswordHash", u."MedInstitutionId",
                    u."IsRemoved", u."Role"
             FROM "Users" u
             WHERE u."IsRemoved" = false
             """;
 
-        object? param = null;
-        if (medInstitutionId.HasValue)
-        {
-            sql += " AND u.\"MedInstitutionId\" = @orgId";
-            param = new { orgId = medInstitutionId.Value };
-        }
+            DynamicParameters param = null;
+            if (medInstitutionId.HasValue)
+            {
+                sql += " AND u.\"MedInstitutionId\" = @orgId";
+                param.Add("@orgId", medInstitutionId.Value);
+            }
 
-        var rows = await ExecuteQueryAsync<DbUserRow>(sql, param, ct);
-        return rows.Select(MapToUser);
+            var rows = await ExecuteQueryAsync<User>(sql, param, token);
+            return rows.Select(UserMapper.MapToUser);
+        }
     }
 }
