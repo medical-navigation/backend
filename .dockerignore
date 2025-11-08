@@ -1,8 +1,6 @@
+# Файлы IDE и временные файлы
 **/.classpath
-**/.dockerignore
 **/.env
-**/.git
-**/.gitignore
 **/.project
 **/.settings
 **/.toolstarget
@@ -12,29 +10,38 @@
 **/*.dbmdl
 **/*.jfm
 **/azds.yaml
-**/bin
 **/charts
-**/docker-compose*
-**/Dockerfile*
 **/node_modules
 **/npm-debug.log
-**/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+
+# NuGet и зависимости (опционально)
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Тестовые результаты
+**/[Tt]est[Rr]esult*/
+**/[Bb]uild[Ll]og.*
+**/coverage*.json
+**/coverage*.xml
+
+# Файлы публикации
+**/[Dd]ebug/
+**/[Dd]ebugPublic/
+**/[Rr]elease/
+**/[Rr]eleases/
+**/x64/
+**/x86/
+**/bld/
+**/[Bb]in/
+**/[Oo]bj/
+**/publish/
+
+# Логи
+**/[Ll]og/
+**/[Ll]ogs/
+
+# Прочие
 LICENSE
 README.md
-!**/.gitignore
-!.git/HEAD
-!.git/config
-!.git/packed-refs
-!.git/refs/heads/**
-.dockerignore
-Dockerfile
-docker-compose*
-.git
-.gitignore
-.vscode
-bin/
-obj/
-*.user
-*.dcproj
