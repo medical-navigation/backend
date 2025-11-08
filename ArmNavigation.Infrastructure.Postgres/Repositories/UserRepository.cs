@@ -92,15 +92,11 @@ namespace ArmNavigation.Infrastructure.Postgres.Repositories
             WHERE u."IsRemoved" = false
             """;
 
-            DynamicParameters param = null;
+            var parameters = new DynamicParameters();
             if (medInstitutionId.HasValue)
-            {
-                sql += " AND u.\"MedInstitutionId\" = @orgId";
-                param.Add("@orgId", medInstitutionId.Value);
-            }
+                parameters.Add("orgId", medInstitutionId.Value);
 
-            var rows = await ExecuteQueryAsync<User>(sql, param, token);
-            return rows.Select(UserMapper.MapToUser);
+            return await ExecuteQueryAsync<User>(sql, parameters, token);
         }
     }
 }

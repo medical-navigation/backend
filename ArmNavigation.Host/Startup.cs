@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace ArmNavigation;
@@ -67,6 +68,8 @@ public class Startup(IConfiguration configuration)
             })
             .AddJwtBearer(options =>
             {
+                JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
                 options.RequireHttpsMetadata = false;
                 options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters

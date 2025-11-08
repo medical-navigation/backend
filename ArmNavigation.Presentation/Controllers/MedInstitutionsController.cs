@@ -50,8 +50,8 @@ namespace ArmNaviagtion.Presentation.Controllers
         {
             int role = GetRoleFromUser(User);
             var ok = await _service.UpdateAsync(id, request.Name, role, token);
-            if (ok == null) return NotFound();
-            return Ok(ok);
+            if (ok == null) return Ok(ok);
+            return NotFound();
         }
 
         [HttpDelete("{id:guid}")]
@@ -59,8 +59,8 @@ namespace ArmNaviagtion.Presentation.Controllers
         {
             int role = GetRoleFromUser(User);
             var ok = await _service.RemoveAsync(id, role, token);
-            if (ok == null) return NotFound();
-            return Ok(ok);
+            if (ok == null) return NoContent();
+            return NotFound();
         }
 
         private static int GetRoleFromUser(ClaimsPrincipal user)

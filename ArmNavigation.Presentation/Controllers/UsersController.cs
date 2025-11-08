@@ -50,8 +50,8 @@ namespace ArmNaviagtion.Presentation.Controllers
         {
             (int role, Guid org) = GetContext(User);
             var ok = await _service.UpdateAsync(id, request.Login, request.Password, request.Role, request.MedInstitutionId, role, org, token);
-            if (ok == null) return NotFound();
-            return Ok(ok);
+            if (ok == null) return Ok(ok);
+            return NotFound();
         }
 
         [HttpDelete("{id:guid}")]
@@ -59,8 +59,8 @@ namespace ArmNaviagtion.Presentation.Controllers
         {
             (int role, Guid org) = GetContext(User);
             var ok = await _service.RemoveAsync(id, role, org, token);
-            if (ok == null) return NotFound();
-            return Ok(ok);
+            if (ok == null) return Ok(ok);
+            return NotFound();
         }
 
         private static (int role, Guid org) GetContext(ClaimsPrincipal user)
