@@ -5,7 +5,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "POSTGRES_CONNECTION_STRING": "Server=localhost;Port=5430;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
+        "POSTGRES_CONNECTION_STRING": "Server=postgres;Port=5432;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
         "DATABASE": "postgres"
       },
       "dotnetRunMessages": true,
@@ -16,7 +16,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "POSTGRES_CONNECTION_STRING": "Server=localhost;Port=5430;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
+        "POSTGRES_CONNECTION_STRING": "Server=postgres;Port=5432;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
         "DATABASE": "postgres"
       },
       "dotnetRunMessages": true,
@@ -27,7 +27,7 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "POSTGRES_CONNECTION_STRING": "Server=localhost;Port=5430;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
+        "POSTGRES_CONNECTION_STRING": "Server=postgres;Port=5432;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
         "DATABASE": "postgres"
       }
     },
@@ -37,7 +37,7 @@
       "environmentVariables": {
         "ASPNETCORE_HTTPS_PORTS": "8081",
         "ASPNETCORE_HTTP_PORTS": "8080",
-        "POSTGRES_CONNECTION_STRING": "Server=localhost;Port=5430;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
+        "POSTGRES_CONNECTION_STRING": "Server=postgres;Port=5432;User Id=admin;Password=admin;Database=ArmNavigation;SearchPath=arm_navigation_schema;Include Error Detail=true",
         "DATABASE": "postgres"
       },
       "publishAllPorts": true,

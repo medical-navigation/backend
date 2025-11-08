@@ -16,7 +16,9 @@ namespace ArmNavigation.Infrastructure.Postgres.Repositories
             WHERE u."Login" = @login AND u."IsRemoved" = false
             """;
 
-            var row = await ExecuteQuerySingleOrDefaultAsync<User>(sql, new { login }, cancellationToken);
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("login", login);
+            var row = await ExecuteQuerySingleOrDefaultAsync<User>(sql, parameters, cancellationToken);
             return row is null ? null : UserMapper.MapToUser(row);
         }
 
