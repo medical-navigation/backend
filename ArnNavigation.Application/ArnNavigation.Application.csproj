@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ArmNavigation.Infrastructure.RabbitMQ\ArmNavigation.Infrastructure.RabbitMQ.csproj" />
     <ProjectReference Include="..\ArmNavigation.Domain\ArmNavigation.Domain.csproj" />
   </ItemGroup>
 

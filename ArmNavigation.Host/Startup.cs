@@ -1,5 +1,6 @@
 ﻿using ArmNavigation.Infrastructure.Postgres.Extensions;
 using ArmNavigation.Infrastructure.Postgres.Repositories;
+using ArmNavigation.Infrastructure.RabbitMQ.Consumers;
 using ArmNavigation.Services;
 using ArnNavigation.Application.Repositories;
 using ArnNavigation.Application.Services;
@@ -23,6 +24,8 @@ public class Startup(IConfiguration configuration)
         service.AddRouting();
         service.AddControllers();
         service.AddEndpointsApiExplorer();
+        service.AddScoped<IPositionService, PositionService>();
+        service.AddHostedService<PositionConsumer>();
 
         // Настройка Swagger с JWT поддержкой
         service.AddSwaggerGen(options =>
@@ -105,11 +108,15 @@ public class Startup(IConfiguration configuration)
         service.AddScoped<IUsersService, UsersService>();
         service.AddScoped<ICarsService, CarsService>();
         service.AddScoped<IMedInstitutionService, MedInstitutionService>();
+        service.AddScoped<IPositionService, PositionService>();
 
         // Repositories
         service.AddScoped<IUserRepository, UserRepository>();
         service.AddScoped<ICarRepository, CarRepository>();
         service.AddScoped<IMedInstitutionRepository, MedInstitutionRepository>();
+        service.AddScoped<IPositionRepository, PositionRepository>();
+
+        service.AddHostedService<PositionConsumer>();
 
         service.ConfigurePostgresInfrastructure();
     }

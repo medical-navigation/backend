@@ -6,4 +6,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArmNavigation.Domain\ArmNavigation.Domain.csproj" />
+    <ProjectReference Include="..\ArnNavigation.Application\ArnNavigation.Application.csproj" />
+  </ItemGroup>
+
 </Project>
