@@ -17,8 +17,10 @@ services:
       - "8080:8080"
       - "8081:8081"
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - armnavigation_net
 
@@ -35,6 +37,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - armnavigation_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d ArmNavigation"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -49,6 +56,11 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - armnavigation_net
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

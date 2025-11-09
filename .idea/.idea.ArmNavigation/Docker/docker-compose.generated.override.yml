@@ -1,0 +1,19 @@
+# This is a generated file. Not intended for manual editing.
+version: "3.9"
+services:
+  armnavigation:
+    build:
+      context: "C:\\Users\\vovac\\source\\backend"
+      dockerfile: "Dockerfile"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/ArmNavigation.Host.dll"
+    environment: {}
+    image: "armnavigation.host:dev"
+    ports: []
+    volumes:
+    - "C:\\Users\\vovac\\source\\backend\\ArmNavigation.Host:/app:rw"
+    - "C:\\Users\\vovac\\source\\backend:/src:rw"
+    - "C:\\Users\\vovac\\.nuget\\packages:/root/.nuget/packages"
+    working_dir: "/app"

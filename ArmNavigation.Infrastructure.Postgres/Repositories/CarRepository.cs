@@ -34,6 +34,16 @@ namespace ArmNavigation.Infrastructure.Postgres.Repositories
             return await ExecuteQuerySingleOrDefaultAsync<Car>(sql, new { id }, token);
         }
 
+        public async Task<Car?> GetByRegNumAsync(string regNum, CancellationToken token)
+        {
+            const string sql = """
+            SELECT c."CarId", c."RegNum", c."MedInstitutionId", c."Gps-tracker" AS "GpsTracker", c."IsRemoved"
+            FROM "Cars" c
+            WHERE c."RegNum" = @regNum AND c."IsRemoved" = false
+            """;
+            return await ExecuteQuerySingleOrDefaultAsync<Car>(sql, new { regNum }, token);
+        }
+
         public async Task<Guid> CreateAsync(Car car, CancellationToken token)
         {
             var id = car.CarId != Guid.Empty ? car.CarId : Guid.NewGuid();
