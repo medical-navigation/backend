@@ -1,5 +1,6 @@
 using ArmNavigation.Domain.Models;
 using ArmNavigation.Presentation.Hubs;
+using ArmNavigation.Presentation.ResponseModels;
 using ArnNavigation.Application.Services;
 using Microsoft.AspNetCore.SignalR;
 
@@ -16,15 +17,15 @@ namespace ArmNavigation.Presentation.Services
 
         public async Task NotifyPositionAsync(PositionMessage message, CancellationToken token = default)
         {
-            var positionData = new
+            var positionData = new PositionUpdateDto
             {
-                ssmpId = message.SsmpId,
-                carNumber = message.CarNumber,
-                carId = message.CarId,
-                deviceId = message.DeviceId,
-                latitude = message.Latitude,
-                longitude = message.Longitude,
-                timestamp = message.Timestamp
+                SsmpId = message.SsmpId,
+                CarNumber = message.CarNumber,
+                CarId = message.CarId,
+                DeviceId = message.DeviceId,
+                Latitude = message.Latitude,
+                Longitude = message.Longitude,
+                Timestamp = message.Timestamp
             };
 
             // Отправляем всем подключенным клиентам
