@@ -7,14 +7,16 @@ COPY ArmNavigation.Domain/ArmNavigation.Domain.csproj ./ArmNavigation.Domain/
 COPY ArmNavigation.Presentation/ArmNavigation.Presentation.csproj ./ArmNavigation.Presentation/
 COPY ArmNavigation.Infrastructure.Postgres/ArmNavigation.Infrastructure.Postgres.csproj ./ArmNavigation.Infrastructure.Postgres/
 COPY ArmNavigation.Infrastructure.Migrator/ArmNavigation.Infrastructure.Migrator.csproj ./ArmNavigation.Infrastructure.Migrator/
+COPY ArmNavigation.Infrastructure.RabbitMQ/ArmNavigation.Infrastructure.RabbitMQ.csproj ./ArmNavigation.Infrastructure.RabbitMQ/
 COPY ArnNavigation.Application/ArnNavigation.Application.csproj ./ArnNavigation.Application/
 
 # Восстанавливаем каждый проект отдельно
 RUN dotnet restore ArmNavigation.Host/ArmNavigation.Host.csproj
-RUN dotnet restore ArmNavigation.Domain/ArmNavigation.Domain.csproj  
+RUN dotnet restore ArmNavigation.Domain/ArmNavigation.Domain.csproj
 RUN dotnet restore ArmNavigation.Presentation/ArmNavigation.Presentation.csproj
 RUN dotnet restore ArmNavigation.Infrastructure.Postgres/ArmNavigation.Infrastructure.Postgres.csproj
 RUN dotnet restore ArmNavigation.Infrastructure.Migrator/ArmNavigation.Infrastructure.Migrator.csproj
+RUN dotnet restore ArmNavigation.Infrastructure.RabbitMQ/ArmNavigation.Infrastructure.RabbitMQ.csproj
 RUN dotnet restore ArnNavigation.Application/ArnNavigation.Application.csproj
 
 # Копируем весь код и публикуем

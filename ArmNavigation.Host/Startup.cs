@@ -1,6 +1,8 @@
 ﻿using ArmNavigation.Infrastructure.Postgres.Extensions;
 using ArmNavigation.Infrastructure.Postgres.Repositories;
 using ArmNavigation.Infrastructure.RabbitMQ.Consumers;
+using ArmNavigation.Presentation.Hubs;
+using ArmNavigation.Presentation.Services;
 using ArmNavigation.Services;
 using ArnNavigation.Application.Repositories;
 using ArnNavigation.Application.Services;
@@ -24,8 +26,7 @@ public class Startup(IConfiguration configuration)
         service.AddRouting();
         service.AddControllers();
         service.AddEndpointsApiExplorer();
-        service.AddScoped<IPositionService, PositionService>();
-        service.AddHostedService<PositionConsumer>();
+        service.AddSignalR();
 
         // Настройка Swagger с JWT поддержкой
         service.AddSwaggerGen(options =>
@@ -116,6 +117,9 @@ public class Startup(IConfiguration configuration)
         service.AddScoped<IMedInstitutionRepository, MedInstitutionRepository>();
         service.AddScoped<IPositionRepository, PositionRepository>();
 
+        // SignalR notifier
+        service.AddScoped<IPositionNotifier, SignalRPositionNotifier>();
+
         service.AddHostedService<PositionConsumer>();
 
         service.ConfigurePostgresInfrastructure();
@@ -133,7 +137,12 @@ public class Startup(IConfiguration configuration)
         applicationBuilder.UseSwagger();
         applicationBuilder.UseSwaggerUI();
 
-        applicationBuilder.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+        // CORS для SignalR требует WithOrigins и AllowCredentials
+        applicationBuilder.UseCors(builder => builder
+            .SetIsOriginAllowed(_ => true) // Для разработки разрешаем любые origins
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()); // Важно для SignalR
 
         applicationBuilder.UseAuthentication();
         applicationBuilder.UseAuthorization();
@@ -141,6 +150,7 @@ public class Startup(IConfiguration configuration)
         applicationBuilder.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
+            endpoints.MapHub<PositionHub>("/hubs/position");
         });
     }
 }

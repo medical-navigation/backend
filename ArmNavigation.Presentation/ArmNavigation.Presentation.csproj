@@ -8,9 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
     <PackageReference Include="WireMock.Net.Abstractions" Version="1.15.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ArnNavigation.Application\ArnNavigation.Application.csproj" />
     <ProjectReference Include="..\ArmNavigation.Domain\ArmNavigation.Domain.csproj" />
